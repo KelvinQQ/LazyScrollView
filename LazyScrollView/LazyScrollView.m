@@ -9,6 +9,9 @@
 #import "LazyScrollView.h"
 #import <objc/runtime.h>
 
+#define LAZY_TOP self.contentOffset.y
+#define LAZY_BOTTOM self.contentOffset.y + self.bounds.size.height
+#define BUFFER 20
 
 @interface LazyScrollView () <UIScrollViewDelegate>
 {
@@ -40,8 +43,8 @@
     for (NSInteger index = 0; index < _numberOfItems; ++ index) {
         [allRects addObject:[_dataSource scrollView:self rectModelAtIndex:index]];
     }
-    _allRects = allRects;
-    LSVRectModel *model = [_allRects lastObject];
+    self.allRects = allRects;
+    LSVRectModel *model = [self.allRects lastObject];
     self.contentSize = CGSizeMake(self.bounds.size.width, model.absRect.origin.y + model.absRect.size.height + 15);
     
     if (_direction == LazyScrollViewDirectionVertical) {
@@ -87,9 +90,7 @@
     if (reuseArray && reuseArray.lastObject) {
         view = reuseArray.lastObject;
     }
-    // 能取出view,并且veiw的标示符正确
     if (view) {
-        // 从缓存池中获取
         view.hidden = NO;
         [self.reuseViews removeObjectForKey:identifier];
         return view;
@@ -116,6 +117,76 @@
 }
 - (NSUInteger)findIndexWithMaxEdge:(CGFloat)maxEdge {
     return 0;
+}
+- (NSArray *)visiableViewModels {
+    NSMutableSet *ascendSet = [self ascendYAndFindGreaterThanTop];
+    
+    NSMutableSet *descendSet = [self descendYAppendHeightAndFindLessThanBottom];
+    
+    [ascendSet intersectSet:descendSet];
+    
+    NSMutableArray *result = [NSMutableArray arrayWithArray: ascendSet.allObjects];
+    return result;
+}
+- (NSMutableSet *)descendYAppendHeightAndFindLessThanBottom {
+    
+    // 根据底边(y+height)降序排序
+    NSMutableArray *dscendYHeight = [NSMutableArray arrayWithArray:self.allRects];
+    
+    [dscendYHeight sortUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
+        
+        return obj1.absRect.origin.y + obj1.absRect.size.height > obj2.absRect.origin.y + obj2.absRect.size.height ? NSOrderedAscending : NSOrderedDescending;
+        
+    }];
+    
+    // 找到所有顶边y小于bottom的model
+    NSNumber *bottom = [NSNumber numberWithFloat: LAZY_BOTTOM + BUFFER];
+    
+    NSArray *array;
+    
+    for (int i = 0; i < dscendYHeight.count; ++i) {
+        
+        LSVRectModel *model = dscendYHeight[i];
+        
+        if ((model.absRect.origin.y) < [bottom floatValue]) {
+            array = [dscendYHeight subarrayWithRange:NSMakeRange(i, dscendYHeight.count - i)];
+            break;
+            
+        }
+    }
+    
+    NSMutableSet *descendSet = [NSMutableSet setWithArray:array];
+    
+    return descendSet;
+}
+- (NSMutableSet *)ascendYAndFindGreaterThanTop {
+    
+    // 根据顶边(y)升序排序
+    NSMutableArray *ascendY = [NSMutableArray arrayWithArray:self.allRects];
+    
+    [ascendY sortUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
+        
+        return obj1.absRect.origin.y > obj2.absRect.origin.y ? NSOrderedDescending : NSOrderedAscending;
+        
+    }];
+    
+    // 找到所有底边y大于top的model
+    NSNumber *top = [NSNumber numberWithFloat: LAZY_TOP - BUFFER];
+    
+    NSArray *array;
+    for (int i = 0; i < ascendY.count; ++i) {
+        LSVRectModel *model = ascendY[i];
+        
+        if (model.absRect.origin.y + model.absRect.size.height > [top floatValue]) {
+            array = [ascendY subarrayWithRange:NSMakeRange(i, ascendY.count - i)];
+            
+            break;
+        }
+    }
+    
+    NSMutableSet *ascendSet = [NSMutableSet setWithArray:array];
+    
+    return ascendSet;
 }
 #pragma mark -
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
