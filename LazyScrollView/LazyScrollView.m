@@ -18,7 +18,7 @@
     
 }
 @property (nonatomic, strong, nullable) NSMutableDictionary<NSString *, NSMutableArray *> *reuseViews;
-@property (nonatomic, copy, nullable) NSArray *allRects;
+@property (nonatomic, copy, nullable) NSMutableArray *allRects;
 @property (nonatomic, assign) NSUInteger numberOfItems;
 @property (nonatomic, strong, nullable) NSMutableDictionary<NSString *,Class> *registerClass;
 @property (nonatomic, copy) NSArray *ascendingMinEdgeRects;
@@ -36,37 +36,20 @@
 }
 - (void)layoutSubviews {
     [super layoutSubviews];
+    
+}
+- (void)willMoveToSuperview:(UIView *)newSuperview {
+    [super willMoveToSuperview:newSuperview];
+    [self updateAllRects];
 }
 - (void)reloadData {
-    _numberOfItems = [_dataSource numberOfItemInScrollView:self];
-    NSMutableArray *allRects = @[].mutableCopy;
-    for (NSInteger index = 0; index < _numberOfItems; ++ index) {
-        [allRects addObject:[_dataSource scrollView:self rectModelAtIndex:index]];
-    }
-    self.allRects = allRects;
-    LSVRectModel *model = [self.allRects lastObject];
-    self.contentSize = CGSizeMake(self.bounds.size.width, model.absRect.origin.y + model.absRect.size.height + 15);
     
-    if (_direction == LazyScrollViewDirectionVertical) {
-        _ascendingMinEdgeRects =
-        [_allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel*  _Nonnull obj1, LSVRectModel*  _Nonnull obj2) {
-            return CGRectGetMinY(obj1.absRect) > CGRectGetMinY(obj2.absRect);
-        }];
-        _descendingMaxEdgeRects =
-        [_allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel*  _Nonnull obj1, LSVRectModel*  _Nonnull obj2) {
-            return CGRectGetMaxY(obj1.absRect) < CGRectGetMaxY(obj2.absRect);
-        }];
-    }
-    else {
-        _ascendingMinEdgeRects =
-        [_allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel*  _Nonnull obj1, LSVRectModel*  _Nonnull obj2) {
-            return CGRectGetMinX(obj1.absRect) > CGRectGetMinX(obj2.absRect);
-        }];
-        _descendingMaxEdgeRects =
-        [_allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel*  _Nonnull obj1, LSVRectModel*  _Nonnull obj2) {
-            return CGRectGetMaxX(obj1.absRect) < CGRectGetMaxX(obj2.absRect);
-        }];
-    }
+    [self.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    [self.visiableViews removeAllObjects];
+    
+    [self updateAllRects];
+    
+    NSMutableArray *visibleViews = [self visiableViewModels];
 }
 
 - (void)enqueueReusableView:(UIView *)view {
@@ -128,65 +111,51 @@
     NSMutableArray *result = [NSMutableArray arrayWithArray: ascendSet.allObjects];
     return result;
 }
+- (void)updateAllRects {
+    [self.allRects removeAllObjects];
+    _numberOfItems = [self.dataSource numberOfItemInScrollView:self];
+    
+    for (NSInteger index = 0; index < _numberOfItems; ++ index) {
+        LSVRectModel *model = [self.dataSource scrollView:self rectModelAtIndex:index];
+        [self.allRects addObject:model];
+    }
+    LSVRectModel *model = self.allRects.lastObject;
+    self.contentSize = CGSizeMake(self.bounds.size.width, model.absRect.origin.y + model.absRect.size.height + 15);
+    
+}
 - (NSMutableSet *)descendYAppendHeightAndFindLessThanBottom {
     
-    // 根据底边(y+height)降序排序
-    NSMutableArray *dscendYHeight = [NSMutableArray arrayWithArray:self.allRects];
-    
-    [dscendYHeight sortUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
-        
-        return obj1.absRect.origin.y + obj1.absRect.size.height > obj2.absRect.origin.y + obj2.absRect.size.height ? NSOrderedAscending : NSOrderedDescending;
-        
+    NSArray *descendingEdgeArray =
+    [self.allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
+        return CGRectGetMaxY(obj1.absRect) < CGRectGetMaxY(obj2.absRect) ? NSOrderedDescending : NSOrderedAscending;
     }];
     
-    // 找到所有顶边y小于bottom的model
-    NSNumber *bottom = [NSNumber numberWithFloat: LAZY_BOTTOM + BUFFER];
-    
-    NSArray *array;
-    
-    for (int i = 0; i < dscendYHeight.count; ++i) {
-        
-        LSVRectModel *model = dscendYHeight[i];
-        
-        if ((model.absRect.origin.y) < [bottom floatValue]) {
-            array = [dscendYHeight subarrayWithRange:NSMakeRange(i, dscendYHeight.count - i)];
-            break;
-            
-        }
+    NSInteger index = descendingEdgeArray.count / 2;
+    LSVRectModel *model = descendingEdgeArray[index];
+    while (model.absRect.origin.y > 300 && index >= 0) {
+        index /= 2;
+        model = descendingEdgeArray[index];
     }
     
-    NSMutableSet *descendSet = [NSMutableSet setWithArray:array];
-    
-    return descendSet;
+    NSArray *array = [descendingEdgeArray subarrayWithRange:NSMakeRange(index, descendingEdgeArray.count)];
+    return [NSMutableSet setWithArray:array];
 }
 - (NSMutableSet *)ascendYAndFindGreaterThanTop {
     
-    // 根据顶边(y)升序排序
-    NSMutableArray *ascendY = [NSMutableArray arrayWithArray:self.allRects];
-    
-    [ascendY sortUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
-        
+    NSArray *ascendingEdgeArray =
+    [self.allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
         return obj1.absRect.origin.y > obj2.absRect.origin.y ? NSOrderedDescending : NSOrderedAscending;
-        
     }];
     
-    // 找到所有底边y大于top的model
-    NSNumber *top = [NSNumber numberWithFloat: LAZY_TOP - BUFFER];
-    
-    NSArray *array;
-    for (int i = 0; i < ascendY.count; ++i) {
-        LSVRectModel *model = ascendY[i];
-        
-        if (model.absRect.origin.y + model.absRect.size.height > [top floatValue]) {
-            array = [ascendY subarrayWithRange:NSMakeRange(i, ascendY.count - i)];
-            
-            break;
-        }
+    NSInteger index = ascendingEdgeArray.count / 2;
+    LSVRectModel *model = ascendingEdgeArray[index];
+    while (model.absRect.origin.y > 300 && index >= 0) {
+        index /= 2;
+        model = ascendingEdgeArray[index];
     }
     
-    NSMutableSet *ascendSet = [NSMutableSet setWithArray:array];
-    
-    return ascendSet;
+    NSArray *array = [ascendingEdgeArray subarrayWithRange:NSMakeRange(index, ascendingEdgeArray.count)];
+    return [NSMutableSet setWithArray:array];
 }
 #pragma mark -
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
@@ -200,9 +169,9 @@
     }
     return _reuseViews;
 }
-- (NSArray *)allRects {
+- (NSMutableArray *)allRects {
     if (!_allRects) {
-        _allRects = @[];
+        _allRects = @[].mutableCopy;
     }
     return _allRects;
 }
