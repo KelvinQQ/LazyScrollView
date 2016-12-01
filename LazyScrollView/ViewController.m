@@ -19,6 +19,7 @@
 @implementation ViewController
 - (void)loadView {
     [super loadView];
+    
     [self loadDatas];
     [self setupUI];
 }
