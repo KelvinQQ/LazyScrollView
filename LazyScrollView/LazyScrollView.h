@@ -24,6 +24,7 @@ typedef NS_ENUM(NSUInteger, LazyScrollViewDirection) {
 @property (nonatomic, assign) LazyScrollViewDirection direction;
 - (void)reloadData;
 - (UIView *)dequeueReusableItemWithIdentifier:(NSString *)identifier;
+- (void)registerClass:(Class)viewClass forViewReuseIdentifier:(NSString *)identifier;
 @end
 
 @protocol LazyScrollViewDataSource <NSObject>
@@ -33,7 +34,8 @@ typedef NS_ENUM(NSUInteger, LazyScrollViewDirection) {
 // 要求根据index直接返回RectModel
 - (LSVRectModel *)scrollView:(LazyScrollView *)scrollView rectModelAtIndex:(NSUInteger)index;
 // 返回下标所对应的view
-- (UIView *)scrollView:(LazyScrollView *)scrollView itemByLsvID:(NSString *)lsvID;
+- (UIView *)scrollView:(LazyScrollView *)scrollView itemByLsvId:(NSString *)lsvId;
+
 @end
 
 @protocol LazyScrollViewDelegate <NSObject, UIScrollViewDelegate>
@@ -45,7 +47,7 @@ typedef NS_ENUM(NSUInteger, LazyScrollViewDirection) {
 
 @interface UIView (LSV)
 // 索引过的标识，在LazyScrollView范围内唯一
-@property (nonatomic, copy) NSString  *lsvID;
+@property (nonatomic, copy) NSString  *lsvId;
 // 重用的ID
 @property (nonatomic, copy) NSString *reuseIdentifier;
 @end
@@ -54,7 +56,8 @@ typedef NS_ENUM(NSUInteger, LazyScrollViewDirection) {
 // 转换后的绝对值rect
 @property (nonatomic, assign) CGRect absRect;
 // 业务下标
-@property (nonatomic, copy) NSString *lsvID;
+@property (nonatomic, copy) NSString *lsvId;
++ (instancetype)modelWithRect:(CGRect)rect lsvId:(NSString *)lsvId;
 @end
 
 

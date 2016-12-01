@@ -9,47 +9,70 @@
 #import "LazyScrollView.h"
 #import <objc/runtime.h>
 
-#define LAZY_TOP self.contentOffset.y
-#define LAZY_BOTTOM self.contentOffset.y + self.bounds.size.height
-#define BUFFER 20
-
 @interface LazyScrollView () <UIScrollViewDelegate>
 {
     
 }
-@property (nonatomic, strong, nullable) NSMutableDictionary<NSString *, NSMutableArray *> *reuseViews;
-@property (nonatomic, copy, nullable) NSMutableArray *allRects;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSMutableSet *> *reuseViews;
+@property (nonatomic, copy) NSMutableArray *allRects;
 @property (nonatomic, assign) NSUInteger numberOfItems;
-@property (nonatomic, strong, nullable) NSMutableDictionary<NSString *,Class> *registerClass;
-@property (nonatomic, copy) NSArray *ascendingMinEdgeRects;
-@property (nonatomic, copy) NSArray *descendingMaxEdgeRects;
-@property (nonatomic, copy) NSMutableArray<__kindof UIView *> *visiableViews;
+@property (nonatomic, strong) NSMutableDictionary<NSString *,Class> *registerClass;
+@property (nonatomic, copy) NSMutableSet<__kindof UIView *> *visibleViews;
 @end
 
 @implementation LazyScrollView
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        self.delegate = self;
+
+- (void)setDataSource:(id<LazyScrollViewDataSource>)dataSource {
+    if (dataSource != _dataSource) {
+        _dataSource = dataSource;
     }
-    return self;
+    if (_dataSource) {
+        [self reloadData];
+    }
 }
+
 - (void)layoutSubviews {
     [super layoutSubviews];
     
+    NSMutableArray *newVisibleViews = [self visiableViewModels].mutableCopy;
+    NSMutableArray *newVisibleLsvIds = [newVisibleViews valueForKey:@"lsvId"];
+    
+    NSMutableArray *removeViews = [NSMutableArray array];
+    for (UIView *view in self.visibleViews) {
+        if (![newVisibleLsvIds containsObject:view.lsvId]) {
+            [removeViews addObject:view];
+        }
+    }
+    
+    for (UIView *view in removeViews) {
+        [self.visibleViews removeObject:view];
+        [self enqueueReusableView:view];
+        [view removeFromSuperview];
+    }
+    
+    NSMutableArray *alreadyVisibles = [self.visibleViews valueForKey:@"lsvId"];
+    
+    for (LSVRectModel *model in newVisibleViews) {
+        if ([alreadyVisibles containsObject:model.lsvId]) {
+            continue;
+        }
+        
+        UIView *view = [self.dataSource scrollView:self itemByLsvId:model.lsvId];
+        view.frame = model.absRect;
+        view.lsvId = model.lsvId;
+        
+        [self.visibleViews addObject:view];
+        [self addSubview:view];
+    }
+    
 }
-- (void)willMoveToSuperview:(UIView *)newSuperview {
-    [super willMoveToSuperview:newSuperview];
-    [self updateAllRects];
-}
+
 - (void)reloadData {
     
     [self.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-    [self.visiableViews removeAllObjects];
+    [self.visibleViews removeAllObjects];
     
     [self updateAllRects];
-    
-    NSMutableArray *visibleViews = [self visiableViewModels];
 }
 
 - (void)enqueueReusableView:(UIView *)view {
@@ -57,25 +80,21 @@
         return;
     }
     NSString *identifier = view.reuseIdentifier;
-    NSMutableArray *reuseArray = self.reuseViews[identifier];
-    if (!reuseArray) {
-        reuseArray = [NSMutableArray array];
-        [self.reuseViews setValue:reuseArray forKey:identifier];
+    NSMutableSet *reuseSet = self.reuseViews[identifier];
+    if (!reuseSet) {
+        reuseSet = [NSMutableSet set];
+        [self.reuseViews setValue:reuseSet forKey:identifier];
     }
-    [reuseArray addObject:view];
+    [reuseSet addObject:view];
 }
 - (UIView *)dequeueReusableItemWithIdentifier:(NSString *)identifier {
     if (!identifier) {
         return nil;
     }
-    UIView *view = nil;
-    NSMutableArray *reuseArray = self.reuseViews[identifier];
-    if (reuseArray && reuseArray.lastObject) {
-        view = reuseArray.lastObject;
-    }
+    NSMutableSet *reuseSet = self.reuseViews[identifier];
+    UIView *view = [reuseSet anyObject];
     if (view) {
-        view.hidden = NO;
-        [self.reuseViews removeObjectForKey:identifier];
+        [reuseSet removeObject:view];
         return view;
     }
     else {
@@ -86,29 +105,73 @@
     }
 }
 
+- (void)registerClass:(Class)viewClass forViewReuseIdentifier:(NSString *)identifier {
+    [self.registerClass setValue:viewClass forKey:identifier];
+}
+
 #pragma mark -
 - (CGFloat)minEdgeOffset {
-    CGFloat min = _direction == LazyScrollViewDirectionVertical ? self.contentOffset.y : self.contentOffset.x;
-    return min - 20;
+    CGFloat min = self.contentOffset.y;
+    return MAX(min - 20, 0);
 }
 - (CGFloat)maxEdgeOffset {
-    CGFloat max = _direction == LazyScrollViewDirectionVertical ? self.contentOffset.y + CGRectGetHeight(self.bounds) : self.contentOffset.x + CGRectGetWidth(self.bounds);
-    return max + 20;
+    CGFloat max = self.contentOffset.y + CGRectGetHeight(self.bounds);
+    return MIN(max + 20, self.contentSize.height);
 }
-- (NSUInteger)findIndexWithMinEdge:(CGFloat)minEdge {
-    return 0;
+- (NSMutableSet *)findSetWithMinEdge:(CGFloat)minEdge {
+    NSArray *ascendingEdgeArray =
+    [self.allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
+        return obj1.absRect.origin.y > obj2.absRect.origin.y ? NSOrderedDescending : NSOrderedAscending;
+    }];
+    
+    NSInteger minIndex = 0;
+    NSInteger maxIndex = ascendingEdgeArray.count - 1;
+    NSInteger midIndex = (minIndex + maxIndex) / 2;
+    LSVRectModel *model = ascendingEdgeArray[midIndex];
+    do {
+        if (CGRectGetMinY(model.absRect) > minEdge) {
+            maxIndex = midIndex;
+        }
+        else {
+            minIndex = midIndex;
+        }
+        midIndex = (minIndex + maxIndex) / 2;
+        model = ascendingEdgeArray[midIndex];
+    } while (minIndex < maxIndex - 1);
+    midIndex = MAX(midIndex - 1, 0);
+    NSArray *array = [ascendingEdgeArray subarrayWithRange:NSMakeRange(midIndex, ascendingEdgeArray.count - midIndex)];
+    return [NSMutableSet setWithArray:array];
 }
-- (NSUInteger)findIndexWithMaxEdge:(CGFloat)maxEdge {
-    return 0;
+- (NSMutableSet *)findSetWithMaxEdge:(CGFloat)maxEdge {
+    
+    NSArray *descendingEdgeArray =
+    [self.allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
+        return CGRectGetMaxY(obj1.absRect) < CGRectGetMaxY(obj2.absRect) ? NSOrderedDescending : NSOrderedAscending;
+    }];
+    
+    NSInteger minIndex = 0;
+    NSInteger maxIndex = descendingEdgeArray.count - 1;
+    NSInteger midIndex = (minIndex + maxIndex) / 2;
+    LSVRectModel *model = descendingEdgeArray[midIndex];
+    do {
+        if (CGRectGetMaxY(model.absRect) < maxEdge) {
+            maxIndex = midIndex;
+        }
+        else {
+            minIndex = midIndex;
+        }
+        midIndex = (minIndex + maxIndex) / 2;
+        model = descendingEdgeArray[midIndex];
+    } while (minIndex < maxIndex - 1);
+    midIndex = MAX(midIndex - 1, 0);
+    NSArray *array = [descendingEdgeArray subarrayWithRange:NSMakeRange(midIndex, descendingEdgeArray.count - midIndex)];
+    return [NSMutableSet setWithArray:array];
 }
 - (NSArray *)visiableViewModels {
-    NSMutableSet *ascendSet = [self ascendYAndFindGreaterThanTop];
-    
-    NSMutableSet *descendSet = [self descendYAppendHeightAndFindLessThanBottom];
-    
+    NSMutableSet *ascendSet = [self findSetWithMinEdge:[self minEdgeOffset]];
+    NSMutableSet *descendSet = [self findSetWithMaxEdge:[self maxEdgeOffset]];
     [ascendSet intersectSet:descendSet];
-    
-    NSMutableArray *result = [NSMutableArray arrayWithArray: ascendSet.allObjects];
+    NSMutableArray *result = [NSMutableArray arrayWithArray:ascendSet.allObjects];
     return result;
 }
 - (void)updateAllRects {
@@ -121,44 +184,6 @@
     }
     LSVRectModel *model = self.allRects.lastObject;
     self.contentSize = CGSizeMake(self.bounds.size.width, model.absRect.origin.y + model.absRect.size.height + 15);
-    
-}
-- (NSMutableSet *)descendYAppendHeightAndFindLessThanBottom {
-    
-    NSArray *descendingEdgeArray =
-    [self.allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
-        return CGRectGetMaxY(obj1.absRect) < CGRectGetMaxY(obj2.absRect) ? NSOrderedDescending : NSOrderedAscending;
-    }];
-    
-    NSInteger index = descendingEdgeArray.count / 2;
-    LSVRectModel *model = descendingEdgeArray[index];
-    while (model.absRect.origin.y > 300 && index >= 0) {
-        index /= 2;
-        model = descendingEdgeArray[index];
-    }
-    
-    NSArray *array = [descendingEdgeArray subarrayWithRange:NSMakeRange(index, descendingEdgeArray.count)];
-    return [NSMutableSet setWithArray:array];
-}
-- (NSMutableSet *)ascendYAndFindGreaterThanTop {
-    
-    NSArray *ascendingEdgeArray =
-    [self.allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
-        return obj1.absRect.origin.y > obj2.absRect.origin.y ? NSOrderedDescending : NSOrderedAscending;
-    }];
-    
-    NSInteger index = ascendingEdgeArray.count / 2;
-    LSVRectModel *model = ascendingEdgeArray[index];
-    while (model.absRect.origin.y > 300 && index >= 0) {
-        index /= 2;
-        model = ascendingEdgeArray[index];
-    }
-    
-    NSArray *array = [ascendingEdgeArray subarrayWithRange:NSMakeRange(index, ascendingEdgeArray.count)];
-    return [NSMutableSet setWithArray:array];
-}
-#pragma mark -
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     
 }
 
@@ -181,23 +206,23 @@
     }
     return _registerClass;
 }
-- (NSMutableArray *)visiableViews {
-    if (!_visiableViews) {
-        _visiableViews = @[].mutableCopy;
+- (NSMutableSet *)visibleViews {
+    if (!_visibleViews) {
+        _visibleViews = [NSMutableSet set];
     }
-    return _visiableViews;
+    return _visibleViews;
 }
 @end
 
-static char kAssociatedObjectKeyLsvID;
+static char kAssociatedObjectKeylsvId;
 static char kAssociatedObjectKeyReuseIdentifier;
 
 @implementation UIView (LSV)
-- (NSString *)lsvID {
-    return objc_getAssociatedObject(self, &kAssociatedObjectKeyLsvID);
+- (NSString *)lsvId {
+    return objc_getAssociatedObject(self, &kAssociatedObjectKeylsvId);
 }
-- (void)setLsvID:(NSString *)lsvID {
-    objc_setAssociatedObject(self, &kAssociatedObjectKeyLsvID, lsvID, OBJC_ASSOCIATION_COPY_NONATOMIC);
+- (void)setLsvId:(NSString *)lsvId {
+    objc_setAssociatedObject(self, &kAssociatedObjectKeylsvId, lsvId, OBJC_ASSOCIATION_COPY_NONATOMIC);
 }
 - (NSString *)reuseIdentifier {
     return objc_getAssociatedObject(self, &kAssociatedObjectKeyReuseIdentifier);
@@ -208,7 +233,12 @@ static char kAssociatedObjectKeyReuseIdentifier;
 @end
 
 @implementation LSVRectModel
-
++ (instancetype)modelWithRect:(CGRect)rect lsvId:(NSString *)lsvId {
+    LSVRectModel *model = [[LSVRectModel alloc] init];
+    model.absRect = rect;
+    model.lsvId = lsvId;
+    return model;
+}
 @end
 
 

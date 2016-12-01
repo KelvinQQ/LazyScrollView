@@ -14,6 +14,7 @@
 		97A478581DEEAD67008395A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97A478571DEEAD67008395A0 /* Assets.xcassets */; };
 		97A4785B1DEEAD67008395A0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97A478591DEEAD67008395A0 /* LaunchScreen.storyboard */; };
 		97A478641DEEAD85008395A0 /* LazyScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 97A478631DEEAD85008395A0 /* LazyScrollView.m */; };
+		97A478731DF004EA008395A0 /* SingleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 97A478721DF004EA008395A0 /* SingleView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +30,8 @@
 		97A4785C1DEEAD67008395A0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		97A478621DEEAD85008395A0 /* LazyScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LazyScrollView.h; sourceTree = "<group>"; };
 		97A478631DEEAD85008395A0 /* LazyScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LazyScrollView.m; sourceTree = "<group>"; };
+		97A478711DF004EA008395A0 /* SingleView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SingleView.h; sourceTree = "<group>"; };
+		97A478721DF004EA008395A0 /* SingleView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SingleView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +75,8 @@
 				97A4784B1DEEAD67008395A0 /* Supporting Files */,
 				97A478621DEEAD85008395A0 /* LazyScrollView.h */,
 				97A478631DEEAD85008395A0 /* LazyScrollView.m */,
+				97A478711DF004EA008395A0 /* SingleView.h */,
+				97A478721DF004EA008395A0 /* SingleView.m */,
 			);
 			path = LazyScrollView;
 			sourceTree = "<group>";
@@ -154,6 +159,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				97A478731DF004EA008395A0 /* SingleView.m in Sources */,
 				97A478531DEEAD67008395A0 /* ViewController.m in Sources */,
 				97A478641DEEAD85008395A0 /* LazyScrollView.m in Sources */,
 				97A478501DEEAD67008395A0 /* AppDelegate.m in Sources */,
@@ -304,6 +310,7 @@
 				97A478611DEEAD67008395A0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
