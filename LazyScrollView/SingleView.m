@@ -9,6 +9,7 @@
 #import "SingleView.h"
 
 NSString * const kViewIdfSingle = @"kViewIdfSingle";
+NSString * const kViewIdfSingleOther = @"kViewIdfSingleOther";
 
 @interface SingleView ()
 @property (nonatomic, strong) UILabel *title;
@@ -29,7 +30,7 @@ NSString * const kViewIdfSingle = @"kViewIdfSingle";
     
     [self addSubview:self.title];
     
-    self.title.frame = CGRectMake(0, 0, 50, 50);
+    self.title.frame = CGRectMake(0, 0, 100, 50);
 }
 
 - (UIColor *)randomColor {
@@ -51,6 +52,8 @@ NSString * const kViewIdfSingle = @"kViewIdfSingle";
 - (UILabel *)title {
     if (!_title) {
         _title = [UILabel new];
+        _title.font = [UIFont systemFontOfSize:13.f];
+        _title.textColor = [UIColor whiteColor];
     }
     return _title;
 }

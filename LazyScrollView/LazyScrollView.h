@@ -20,8 +20,12 @@ typedef NS_ENUM(NSUInteger, LazyScrollViewDirection) {
 
 @interface LazyScrollView : UIScrollView
 @property (nonatomic, weak) id<LazyScrollViewDataSource> dataSource;
-@property (nonatomic, weak) id<LazyScrollViewDelegate> delegateLsv;
-@property (nonatomic, assign) LazyScrollViewDirection direction;
+//@property (nonatomic, weak) id<LazyScrollViewDelegate> delegateLsv;
+/**
+ *  滚动方向
+ *  暂时只支持 `LazyScrollViewDirectionVertical`
+ */
+//@property (nonatomic, assign) LazyScrollViewDirection direction;
 - (void)reloadData;
 - (UIView *)dequeueReusableItemWithIdentifier:(NSString *)identifier;
 - (void)registerClass:(Class)viewClass forViewReuseIdentifier:(NSString *)identifier;

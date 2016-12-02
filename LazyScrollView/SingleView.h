@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 
 extern NSString * const kViewIdfSingle;
+extern NSString * const kViewIdfSingleOther;
 
 @interface SingleView : UIView
 @property (nonatomic, copy) NSString *data;

@@ -14,10 +14,10 @@
     
 }
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSMutableSet *> *reuseViews;
-@property (nonatomic, copy) NSMutableArray *allRects;
+@property (nonatomic, strong) NSMutableArray *allRects;
 @property (nonatomic, assign) NSUInteger numberOfItems;
 @property (nonatomic, strong) NSMutableDictionary<NSString *,Class> *registerClass;
-@property (nonatomic, copy) NSMutableSet<__kindof UIView *> *visibleViews;
+@property (nonatomic, strong) NSMutableSet<__kindof UIView *> *visibleViews;
 @end
 
 @implementation LazyScrollView
@@ -33,17 +33,15 @@
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    
+    // TOOD: 此处算法待优化
     NSMutableArray *newVisibleViews = [self visiableViewModels].mutableCopy;
     NSMutableArray *newVisibleLsvIds = [newVisibleViews valueForKey:@"lsvId"];
-    
     NSMutableArray *removeViews = [NSMutableArray array];
     for (UIView *view in self.visibleViews) {
         if (![newVisibleLsvIds containsObject:view.lsvId]) {
             [removeViews addObject:view];
         }
     }
-    
     for (UIView *view in removeViews) {
         [self.visibleViews removeObject:view];
         [self enqueueReusableView:view];
@@ -56,7 +54,6 @@
         if ([alreadyVisibles containsObject:model.lsvId]) {
             continue;
         }
-        
         UIView *view = [self.dataSource scrollView:self itemByLsvId:model.lsvId];
         view.frame = model.absRect;
         view.lsvId = model.lsvId;
@@ -124,6 +121,8 @@
         return obj1.absRect.origin.y > obj2.absRect.origin.y ? NSOrderedDescending : NSOrderedAscending;
     }];
     
+    // TOOD: 此处待优化
+    // 二分法
     NSInteger minIndex = 0;
     NSInteger maxIndex = ascendingEdgeArray.count - 1;
     NSInteger midIndex = (minIndex + maxIndex) / 2;
@@ -148,7 +147,8 @@
     [self.allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
         return CGRectGetMaxY(obj1.absRect) < CGRectGetMaxY(obj2.absRect) ? NSOrderedDescending : NSOrderedAscending;
     }];
-    
+    // TOOD: 此处待优化
+    // 二分法
     NSInteger minIndex = 0;
     NSInteger maxIndex = descendingEdgeArray.count - 1;
     NSInteger midIndex = (minIndex + maxIndex) / 2;
@@ -183,8 +183,7 @@
         [self.allRects addObject:model];
     }
     LSVRectModel *model = self.allRects.lastObject;
-    self.contentSize = CGSizeMake(self.bounds.size.width, model.absRect.origin.y + model.absRect.size.height + 15);
-    
+    self.contentSize = CGSizeMake(CGRectGetWidth(self.bounds), CGRectGetMaxY(model.absRect));
 }
 
 #pragma mark - getter

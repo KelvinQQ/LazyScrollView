@@ -52,12 +52,17 @@
 }
 
 - (UIView *)scrollView:(LazyScrollView *)scrollView itemByLsvId:(NSString *)lsvId {
-    
-    SingleView *view = (SingleView *)[self.lazyScrollView dequeueReusableItemWithIdentifier:kViewIdfSingle];
-    
-    view.data = self.viewsData[lsvId];
-    
-    return view;
+    NSInteger index = [[[lsvId componentsSeparatedByString:@"/"] valueForKeyPath:@"@sum.integerValue"] integerValue];
+    if (index % 3 == 1 || index % 5 == 2) {
+        SingleView *view = (SingleView *)[self.lazyScrollView dequeueReusableItemWithIdentifier:kViewIdfSingleOther];
+        view.data = [NSString stringWithFormat:@"Single2 - %@", self.viewsData[lsvId]];
+        return view;
+    }
+    else {
+        SingleView *view = (SingleView *)[self.lazyScrollView dequeueReusableItemWithIdentifier:kViewIdfSingle];
+        view.data = [NSString stringWithFormat:@"Single1 - %@", self.viewsData[lsvId]];
+        return view;
+    }
 }
 
 - (void)loadDatas {
@@ -83,6 +88,7 @@
         _lazyScrollView = [LazyScrollView new];
         _lazyScrollView.dataSource = self;
         [_lazyScrollView registerClass:[SingleView class] forViewReuseIdentifier:kViewIdfSingle];
+        [_lazyScrollView registerClass:[SingleView class] forViewReuseIdentifier:kViewIdfSingleOther];
     }
     return _lazyScrollView;
 }
