@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0301AB771DF3B23F00F798AB /* LazyScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0301AB761DF3B23F00F798AB /* LazyScrollView.m */; };
+		0301AB7B1DF3B8E600F798AB /* LazyScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0301AB7A1DF3B8E600F798AB /* LazyScrollView.m */; };
 		97A4784D1DEEAD67008395A0 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 97A4784C1DEEAD67008395A0 /* main.m */; };
 		97A478501DEEAD67008395A0 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 97A4784F1DEEAD67008395A0 /* AppDelegate.m */; };
 		97A478531DEEAD67008395A0 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 97A478521DEEAD67008395A0 /* ViewController.m */; };
@@ -18,8 +18,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0301AB751DF3B23F00F798AB /* LazyScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LazyScrollView.h; sourceTree = "<group>"; };
-		0301AB761DF3B23F00F798AB /* LazyScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LazyScrollView.m; sourceTree = "<group>"; };
+		0301AB791DF3B8E600F798AB /* LazyScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LazyScrollView.h; sourceTree = "<group>"; };
+		0301AB7A1DF3B8E600F798AB /* LazyScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LazyScrollView.m; sourceTree = "<group>"; };
 		97A478481DEEAD67008395A0 /* LazyScrollView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LazyScrollView.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		97A4784C1DEEAD67008395A0 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		97A4784E1DEEAD67008395A0 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -45,14 +45,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0301AB741DF3B23F00F798AB /* LazyScrollView */ = {
+		0301AB781DF3B8E600F798AB /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				0301AB751DF3B23F00F798AB /* LazyScrollView.h */,
-				0301AB761DF3B23F00F798AB /* LazyScrollView.m */,
+				0301AB791DF3B8E600F798AB /* LazyScrollView.h */,
+				0301AB7A1DF3B8E600F798AB /* LazyScrollView.m */,
 			);
-			path = LazyScrollView;
-			sourceTree = "<group>";
+			path = Classes;
+			sourceTree = SOURCE_ROOT;
 		};
 		97A4783F1DEEAD66008395A0 = {
 			isa = PBXGroup;
@@ -73,7 +73,7 @@
 		97A4784A1DEEAD67008395A0 /* LazyScrollView */ = {
 			isa = PBXGroup;
 			children = (
-				0301AB741DF3B23F00F798AB /* LazyScrollView */,
+				0301AB781DF3B8E600F798AB /* Classes */,
 				97A4784E1DEEAD67008395A0 /* AppDelegate.h */,
 				97A4784F1DEEAD67008395A0 /* AppDelegate.m */,
 				97A478511DEEAD67008395A0 /* ViewController.h */,
@@ -169,7 +169,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				97A478731DF004EA008395A0 /* SingleView.m in Sources */,
-				0301AB771DF3B23F00F798AB /* LazyScrollView.m in Sources */,
+				0301AB7B1DF3B8E600F798AB /* LazyScrollView.m in Sources */,
 				97A478531DEEAD67008395A0 /* ViewController.m in Sources */,
 				97A478501DEEAD67008395A0 /* AppDelegate.m in Sources */,
 				97A4784D1DEEAD67008395A0 /* main.m in Sources */,
