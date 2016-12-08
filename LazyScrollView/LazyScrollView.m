@@ -9,15 +9,17 @@
 #import "LazyScrollView.h"
 #import <objc/runtime.h>
 
+CGFloat const kBufferSize = 20;
+
 @interface LazyScrollView () <UIScrollViewDelegate>
 {
     
 }
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSMutableSet *> *reuseViews;
+@property (nonatomic, strong) NSMutableSet<__kindof UIView *> *visibleViews;
 @property (nonatomic, strong) NSMutableArray *allRects;
 @property (nonatomic, assign) NSUInteger numberOfItems;
 @property (nonatomic, strong) NSMutableDictionary<NSString *,Class> *registerClass;
-@property (nonatomic, strong) NSMutableSet<__kindof UIView *> *visibleViews;
 @end
 
 @implementation LazyScrollView
@@ -109,16 +111,16 @@
 #pragma mark -
 - (CGFloat)minEdgeOffset {
     CGFloat min = self.contentOffset.y;
-    return MAX(min - 20, 0);
+    return MAX(min - kBufferSize, 0);
 }
 - (CGFloat)maxEdgeOffset {
     CGFloat max = self.contentOffset.y + CGRectGetHeight(self.bounds);
-    return MIN(max + 20, self.contentSize.height);
+    return MIN(max + kBufferSize, self.contentSize.height);
 }
 - (NSMutableSet *)findSetWithMinEdge:(CGFloat)minEdge {
     NSArray *ascendingEdgeArray =
     [self.allRects sortedArrayUsingComparator:^NSComparisonResult(LSVRectModel *obj1, LSVRectModel *obj2) {
-        return obj1.absRect.origin.y > obj2.absRect.origin.y ? NSOrderedDescending : NSOrderedAscending;
+        return CGRectGetMinY(obj1.absRect) > CGRectGetMinY(obj2.absRect) ? NSOrderedDescending : NSOrderedAscending;
     }];
     
     // TOOD: 此处待优化
@@ -127,7 +129,7 @@
     NSInteger maxIndex = ascendingEdgeArray.count - 1;
     NSInteger midIndex = (minIndex + maxIndex) / 2;
     LSVRectModel *model = ascendingEdgeArray[midIndex];
-    do {
+    while (minIndex < maxIndex - 1) {
         if (CGRectGetMinY(model.absRect) > minEdge) {
             maxIndex = midIndex;
         }
@@ -136,7 +138,7 @@
         }
         midIndex = (minIndex + maxIndex) / 2;
         model = ascendingEdgeArray[midIndex];
-    } while (minIndex < maxIndex - 1);
+    }
     midIndex = MAX(midIndex - 1, 0);
     NSArray *array = [ascendingEdgeArray subarrayWithRange:NSMakeRange(midIndex, ascendingEdgeArray.count - midIndex)];
     return [NSMutableSet setWithArray:array];
@@ -153,7 +155,7 @@
     NSInteger maxIndex = descendingEdgeArray.count - 1;
     NSInteger midIndex = (minIndex + maxIndex) / 2;
     LSVRectModel *model = descendingEdgeArray[midIndex];
-    do {
+    while (minIndex < maxIndex - 1) {
         if (CGRectGetMaxY(model.absRect) < maxEdge) {
             maxIndex = midIndex;
         }
@@ -162,7 +164,7 @@
         }
         midIndex = (minIndex + maxIndex) / 2;
         model = descendingEdgeArray[midIndex];
-    } while (minIndex < maxIndex - 1);
+    }
     midIndex = MAX(midIndex - 1, 0);
     NSArray *array = [descendingEdgeArray subarrayWithRange:NSMakeRange(midIndex, descendingEdgeArray.count - midIndex)];
     return [NSMutableSet setWithArray:array];
