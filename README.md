@@ -55,13 +55,15 @@
 * 对 **顶边** 做升序处理得到一个集合，对 **底边** 降序处理得到一个集合。
 * 采用二分法查找合适的位置，然后再对上一步得到的集合取子集即可。
 
-好了，说了这么多，先放出DEMO地址吧，希望大家可以帮助完善，也希望可以给个Star。
-[https://github.com/HistoryZhang/LazyScrollView](https://github.com/HistoryZhang/LazyScrollView)。
+好了，说了这么多，先放出DEMO地址吧，希望大家可以帮助完善，也希望可以给个Star。[https://github.com/HistoryZhang/LazyScrollView](https://github.com/HistoryZhang/LazyScrollView)。
+
 原文地址：[苹果核 - iOS 高性能异构滚动视图构建方案 —— LazyScrollView](http://pingguohe.net/2016/01/31/lazyscroll.html)（里面还有很多干货）。
 
 最后说一下目前写的几个问题，希望大家可以一起来优化：
 1. 没有处理`View`点击事件，即没有写`delegate`回调。
+
 2. 二分法查找合适位置的时候算法待优化。
+
 3. 从旧的`visibleViews`中移除被滑出的`View`算法待优化。
 
 贴一段第二个问题的代码：
