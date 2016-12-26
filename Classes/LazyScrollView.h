@@ -8,28 +8,13 @@
 
 #import <UIKit/UIKit.h>
 
-@protocol LazyScrollViewDataSource;
-@protocol LazyScrollViewDelegate;
-
 @class LSVRectModel;
+@class LazyScrollView;
 
 typedef NS_ENUM(NSUInteger, LazyScrollViewDirection) {
     LazyScrollViewDirectionHorizontal,
     LazyScrollViewDirectionVertical,
 };
-
-@interface LazyScrollView : UIScrollView
-@property (nonatomic, weak) id<LazyScrollViewDataSource> dataSource;
-//@property (nonatomic, weak) id<LazyScrollViewDelegate> delegateLsv;
-/**
- *  滚动方向
- *  暂时只支持 `LazyScrollViewDirectionVertical`
- */
-//@property (nonatomic, assign) LazyScrollViewDirection direction;
-- (void)reloadData;
-- (UIView *)dequeueReusableItemWithIdentifier:(NSString *)identifier;
-- (void)registerClass:(Class)viewClass forViewReuseIdentifier:(NSString *)identifier;
-@end
 
 @protocol LazyScrollViewDataSource <NSObject>
 @required
@@ -45,9 +30,24 @@ typedef NS_ENUM(NSUInteger, LazyScrollViewDirection) {
 @protocol LazyScrollViewDelegate <NSObject, UIScrollViewDelegate>
 
 @optional
-- (void)scrollView:(LazyScrollView *)scrollView didClickItemAtIndex:(NSUInteger)index;
+- (void)scrollView:(LazyScrollView *)scrollView didClickItemAtLsvId:(NSString *)lsvId;
 
 @end
+
+@interface LazyScrollView : UIScrollView
+@property (nonatomic, weak) id<LazyScrollViewDataSource> dataSource;
+@property (nonatomic, weak) id<LazyScrollViewDelegate> delegate;
+/**
+ *  滚动方向
+ *  暂时只支持 `LazyScrollViewDirectionVertical`
+ */
+//@property (nonatomic, assign) LazyScrollViewDirection direction;
+- (void)reloadData;
+- (UIView *)dequeueReusableItemWithIdentifier:(NSString *)identifier;
+- (void)registerClass:(Class)viewClass forViewReuseIdentifier:(NSString *)identifier;
+@end
+
+
 
 @interface UIView (LSV)
 // 索引过的标识，在LazyScrollView范围内唯一

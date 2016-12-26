@@ -10,7 +10,7 @@
 #import "LazyScrollView.h"
 #import "SingleView.h"
 
-@interface ViewController () <LazyScrollViewDataSource>
+@interface ViewController () <LazyScrollViewDataSource, LazyScrollViewDelegate>
 @property (strong, nonatomic) LazyScrollView *lazyScrollView;
 @property (copy, nonatomic) NSArray<LSVRectModel *> *rectDatas;
 @property (copy, nonatomic) NSDictionary *viewsData;
@@ -80,6 +80,9 @@
     
 }
 
+- (void)scrollView:(LazyScrollView *)scrollView didClickItemAtLsvId:(NSString *)lsvId {
+    NSLog(@"%@", lsvId);
+}
 
 #pragma mark - getter
 
@@ -87,6 +90,7 @@
     if (!_lazyScrollView) {
         _lazyScrollView = [LazyScrollView new];
         _lazyScrollView.dataSource = self;
+        _lazyScrollView.delegate = self;
         [_lazyScrollView registerClass:[SingleView class] forViewReuseIdentifier:kViewIdfSingle];
         [_lazyScrollView registerClass:[SingleView class] forViewReuseIdentifier:kViewIdfSingleOther];
     }

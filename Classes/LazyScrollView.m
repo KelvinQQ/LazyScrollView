@@ -19,10 +19,11 @@ CGFloat const kBufferSize = 20;
 @property (nonatomic, strong) NSMutableSet<__kindof UIView *> *visibleViews;
 @property (nonatomic, strong) NSMutableArray *allRects;
 @property (nonatomic, assign) NSUInteger numberOfItems;
-@property (nonatomic, strong) NSMutableDictionary<NSString *,Class> *registerClass;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, Class> *registerClass;
 @end
 
 @implementation LazyScrollView
+@dynamic delegate;
 
 - (void)setDataSource:(id<LazyScrollViewDataSource>)dataSource {
     if (dataSource != _dataSource) {
@@ -99,6 +100,11 @@ CGFloat const kBufferSize = 20;
     else {
         Class viewClass = [self.registerClass objectForKey:identifier];
         view = [viewClass new];
+
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapItemAction:)];
+        [view addGestureRecognizer:tap];
+        view.userInteractionEnabled = YES;
+        
         view.reuseIdentifier = identifier;
         return view;
     }
@@ -186,6 +192,13 @@ CGFloat const kBufferSize = 20;
     }
     LSVRectModel *model = self.allRects.lastObject;
     self.contentSize = CGSizeMake(CGRectGetWidth(self.bounds), CGRectGetMaxY(model.absRect));
+}
+
+- (void)tapItemAction:(UITapGestureRecognizer *)gesture {
+    if ([self.delegate respondsToSelector:@selector(scrollView:didClickItemAtLsvId:)]) {
+        UIView *view = [gesture view];
+        [self.delegate scrollView:self didClickItemAtLsvId:view.lsvId];
+    }
 }
 
 #pragma mark - getter
