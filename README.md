@@ -114,3 +114,15 @@
     }
 ```
 
+##更新记录
+* **2016.12.27 新增`delegate`**
+
+	新增了`@protocol LazyScrollViewDelegate <NSObject, UIScrollViewDelegate>`。其中有一个接口：
+	
+	```
+	@optional
+	- (void)scrollView:(LazyScrollView *)scrollView didClickItemAtLsvId:(NSString *)lsvId;
+	```
+	由于`lsvId`在`ScrollView`中是唯一了，这里就没有使用`index`了。
+	
+* **2016.12.04 实现基本功能**
