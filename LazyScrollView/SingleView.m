@@ -26,8 +26,6 @@ NSString * const kViewIdfSingleOther = @"kViewIdfSingleOther";
 
 - (void)setupUI {
     
-    self.backgroundColor = [self randomColor];
-    
     [self addSubview:self.title];
     
     self.title.frame = CGRectMake(0, 0, 100, 50);
@@ -45,6 +43,7 @@ NSString * const kViewIdfSingleOther = @"kViewIdfSingleOther";
 - (void)setData:(NSString *)data {
     _data = data;
     self.title.text = data;
+    self.backgroundColor = [self randomColor];
 }
 
 #pragma mark - getter
