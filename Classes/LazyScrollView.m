@@ -9,9 +9,9 @@
 #import "LazyScrollView.h"
 #import <objc/runtime.h>
 
-CGFloat const kBufferSize = 20;
+static CGFloat const kBufferSize = 20;
 
-@interface LazyScrollView () <UIScrollViewDelegate>
+@interface LazyScrollView ()
 {
     
 }
