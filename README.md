@@ -114,6 +114,9 @@
     }
 ```
 
+##项目引用
+已经支持`cocoapods`，在`Podfile`中添加 `pod 'LazyScrollView'`然后`pod update`即可。
+
 ##更新记录
 * **2016.12.27 新增`delegate`**
 
